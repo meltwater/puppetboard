@@ -33,7 +33,7 @@ puppetdb = connect(
     api_version=3,
     host=app.config['PUPPETDB_HOST'],
     port=app.config['PUPPETDB_PORT'],
-    ssl=app.config['PUPPETDB_SSL'],
+    ssl_verify=app.config['PUPPETDB_SSL_VERIFY'],
     ssl_key=app.config['PUPPETDB_KEY'],
     ssl_cert=app.config['PUPPETDB_CERT'],
     timeout=app.config['PUPPETDB_TIMEOUT'],)
@@ -100,7 +100,7 @@ def index():
     metrics = {
         'num_nodes': num_nodes['Value'],
         'num_resources': num_resources['Value'],
-        'avg_resources_node': "{0:10.6f}".format(avg_resources_node['Value']),
+        'avg_resources_node': "{0:10.0f}".format(avg_resources_node['Value']),
         }
 
     nodes = puppetdb.nodes(
@@ -261,6 +261,31 @@ def fact(fact):
         name=fact,
         facts=localfacts)))
 
+@app.route('/mwapps')
+def mwapps():
+    localfacts = [f for f in yield_or_stop(puppetdb.facts(name='mwapps'))]
+
+    funfacts = []
+    for fact in localfacts:
+        for appl in fact.value.split(";"):
+            if ":" in appl:
+                (appn, instnr) =  appl.split(":")
+                node = puppetdb.node(fact.node)
+                mwapp_factname = "mwapp_" + appn + "_" + instnr + "_version"
+                try:
+                    applver = node.fact(mwapp_factname).value
+                except:
+                    pass
+                tmphash = { "node" : fact.node, "application" : appn,  "instance" : instnr, "version" : applver } 
+                funfacts.append(tmphash)
+            else:
+                tmphash = { "node" : fact.node, "application" : appl, "instance" : "NA", "version" : applver}
+                funfacts.append(tmphash)
+
+    return Response(stream_with_context(stream_template(
+        'mwapps.html',
+        name='Meltwater Apps',
+        facts=funfacts)))
 
 @app.route('/fact/<fact>/<value>')
 def fact_value(fact, value):

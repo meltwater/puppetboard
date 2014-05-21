@@ -1,8 +1,34 @@
+{% macro mwappsfacts_table(facts, autofocus=False, condensed=False, link_facts=False, margin_top=20, margin_bottom=20) -%}
+<div class="filter" style="margin-bottom:{{margin_bottom}}px;margin-top:{{margin_top}}px;">
+  <input {% if autofocus %} autofocus="autofocus" {% endif %} style="width:100%" type="text" class="filter-table input-medium search-query" placeholder="Type here to filter">
+</div>
+
+<table class="filter-table facts table table-striped {% if condensed %}table-condensed{% endif%}" style="table-layout:fixed">
+  <thead>
+    <tr>
+      <th>Node</th>
+      <th>Application</th>
+      <th>Instance</th>
+      <th>Version</th>
+    </tr>
+  </thead>
+  <tbody class="searchable">
+    {% for fact in facts %}
+      <tr>
+        <td><a href="{{url_for('node', node_name=fact.node)}}">{{fact.node}}</a></td>
+        <td style="word-wrap:break-word">{{fact.application}}</td>
+        <td>{{fact.instance}}</td>
+        <td>{{fact.version}}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{%- endmacro %}
 {% macro facts_table(facts, autofocus=False, condensed=False, show_node=False, show_value=True, link_facts=False, margin_top=20, margin_bottom=20) -%}
 <div class="filter" style="margin-bottom:{{margin_bottom}}px;margin-top:{{margin_top}}px;">
   <input {% if autofocus %} autofocus="autofocus" {% endif %} style="width:100%" type="text" class="filter-table input-medium search-query" placeholder="Type here to filter">
 </div>
-<table class="filter-table table table-striped {% if condensed %}table-condensed{% endif%}" style="table-layout:fixed">
+<table class="filter-table facts table table-striped {% if condensed %}table-condensed{% endif%}" style="table-layout:fixed">
   <thead>
     <tr>
       {% if show_node %}
