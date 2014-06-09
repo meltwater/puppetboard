@@ -4,7 +4,10 @@ from __future__ import absolute_import
 import os
 import logging
 import collections
-import urllib
+try:
+    from urllib import unquote
+except ImportError:
+    from urllib.parse import unquote
 from datetime import datetime, timedelta
 
 from flask import (
@@ -113,6 +116,7 @@ def index():
         'unchanged': 0,
         'failed': 0,
         'unreported': 0,
+	'noop': 0
         }
 
     for node in nodes:
@@ -122,6 +126,8 @@ def index():
             stats['changed'] += 1
         elif node.status == 'failed':
             stats['failed'] += 1
+        elif node.status == 'noop':
+            stats['noop'] += 1
         else:
             stats['unchanged'] += 1
 
@@ -309,10 +315,14 @@ def query():
     if app.config['ENABLE_QUERY']:
         form = QueryForm()
         if form.validate_on_submit():
+            if form.query.data[0] == '[':
+                query = form.query.data
+            else:
+                query = '[{0}]'.format(form.query.data)
             result = get_or_abort(
                 puppetdb._query,
                 form.endpoints.data,
-                query='[{0}]'.format(form.query.data))
+                query=query)
             return render_template('query.html', form=form, result=result)
         return render_template('query.html', form=form)
     else:
@@ -323,14 +333,14 @@ def query():
 @app.route('/metrics')
 def metrics():
     metrics = get_or_abort(puppetdb._query, 'metrics', path='mbeans')
-    for key, value in metrics.iteritems():
+    for key, value in metrics.items():
         metrics[key] = value.split('/')[3]
     return render_template('metrics.html', metrics=sorted(metrics.items()))
 
 
 @app.route('/metric/<metric>')
 def metric(metric):
-    name = urllib.unquote(metric)
+    name = unquote(metric)
     metric = puppetdb.metric(metric)
     return render_template(
         'metric.html',
