@@ -3,7 +3,7 @@
   <input {% if autofocus %} autofocus="autofocus" {% endif %} style="width:100%" type="text" class="filter-table input-medium search-query" placeholder="Type here to filter">
 </div>
 
-<table class="filter-table facts table table-striped {% if condensed %}table-condensed{% endif%}" style="table-layout:fixed">
+<table class="filter-table facts ui table table-striped {% if condensed %}table-condensed{% endif%}" style="table-layout:fixed">
   <thead>
     <tr>
       <th>Node</th>
@@ -19,6 +19,32 @@
         <td style="word-wrap:break-word">{{fact.application}}</td>
         <td>{{fact.instance}}</td>
         <td>{{fact.version}}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{%- endmacro %}
+{% macro mwlabfacts_table(facts, autofocus=False, condensed=False, link_facts=False, margin_top=20, margin_bottom=20) -%}
+<div class="filter" style="margin-bottom:{{margin_bottom}}px;margin-top:{{margin_top}}px;">
+  <input {% if autofocus %} autofocus="autofocus" {% endif %} style="width:100%" type="text" class="filter-table input-medium search-query" placeholder="Type here to filter">
+</div>
+
+<table class="filter-table facts ui table table-striped {% if condensed %}table-condensed{% endif%}" style="table-layout:fixed">
+  <thead>
+    <tr>
+      <th>Node</th>
+      <th>Role</th>
+      <th>Environment</th>
+      <th>Owner</th>
+    </tr>
+  </thead>
+  <tbody class="searchable">
+    {% for fact in facts %}
+      <tr>
+        <td><a href="{{url_for('node', node_name=fact.node)}}">{{fact.node}}</a></td>
+        <td style="word-wrap:break-word">{{fact.role}}</td>
+        <td style="word-wrap:break-word">{{fact.env}}</td>
+        <td style="word-wrap:break-word">{{fact.owner}}</td>
       </tr>
     {% endfor %}
   </tbody>

@@ -267,12 +267,35 @@ def fact(fact):
         name=fact,
         facts=localfacts)))
 
+@app.route('/mwlab')
+def mwlab():
+    role_facts = [f for f in yield_or_stop(puppetdb.facts(name='machine_role'))]
+
+    facts = []
+    for role_fact in role_facts:
+        if role_fact.value == "false": continue
+        hostname = role_fact.node
+        role = role_fact.value
+
+        node = puppetdb.node(hostname)
+        env = node.fact("machine_env").value
+        owner = node.fact("machine_owner").value
+        
+        tmphash = { "node" : hostname, "role" : role, "env" : env, "owner" : owner }
+        facts.append(tmphash)
+
+    return Response(stream_with_context(stream_template(
+        'mwlab.html',
+        name='Meltwater Lab',
+        facts=facts)))
+
 @app.route('/mwapps')
 def mwapps():
     localfacts = [f for f in yield_or_stop(puppetdb.facts(name='mwapps'))]
 
     funfacts = []
     for fact in localfacts:
+        if fact.value == "false": continue
         for appl in fact.value.split(";"):
             if ":" in appl:
                 (appn, instnr) =  appl.split(":")
@@ -281,6 +304,7 @@ def mwapps():
                 try:
                     applver = node.fact(mwapp_factname).value
                 except:
+                    applver = "Err"
                     pass
                 tmphash = { "node" : fact.node, "application" : appn,  "instance" : instnr, "version" : applver } 
                 funfacts.append(tmphash)
